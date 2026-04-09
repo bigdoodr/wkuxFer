@@ -4,7 +4,7 @@
 <dict>
 	<key>NSBonjourServices</key>
 	<array>
-		<string>_migrator._tcp</string>
+		<string>_xfer_wku._tcp</string>
 	</array>
 	<key>UIApplicationSceneManifest</key>
 	<dict>

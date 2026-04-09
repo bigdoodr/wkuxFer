@@ -26,7 +26,7 @@ struct AppContext {
     
     /// The name used to refer the organization that manage the device.
     /// Managed setting available using `orgName` defaults key.
-    private static let fallbackOrgName: String = "<Organization Name>"
+    private static let fallbackOrgName: String = "WKU"
     
     /// Path the Jamf Self Service .app
     /// Managed setting available using `storePath` defaults key.
@@ -43,7 +43,7 @@ struct AppContext {
     
     /// The service identifier used to discover and connect to network services via Bonjour (DNS-SD).
     /// Managed setting available using `networkServiceIdentifier` defaults key.
-    private static let fallbackNetworkServiceIdentifier: String = "<Service Identifier>"
+    private static let fallbackNetworkServiceIdentifier: String = "_xfer_wku"
 
     /// A URL to redirect users to setup instructions if the app detects the device is not managed by MDM.
     /// Managed setting available using `enrollmentRedirectionLink` defaults key.
@@ -55,15 +55,15 @@ struct AppContext {
     
     /// Flag that defines whether or not to check the device's management state and if it's enrolled in a recognised environment.
     /// Managed setting available using `skipMDMCheck` defaults key.
-    private static let fallbackShouldSkipMDMCheck: Bool = false
+    private static let fallbackShouldSkipMDMCheck: Bool = true
     
     /// Flag that determines whether or not to display the post-migration phase for Apple ID login verification.
     /// Managed setting available using `skipAppleIDCheck` defaults key.
-    private static let fallbackShouldSkipAppleIDCheck: Bool = false
+    private static let fallbackShouldSkipAppleIDCheck: Bool = true
     
     /// Flag that specifies whether or not to perform an inventory update to Jamf Pro.
     /// Managed setting available using `skipJamfRecon` defaults key.
-    private static let fallbackShouldSkipJamfRecon: Bool = false
+    private static let fallbackShouldSkipJamfRecon: Bool = true
     
     /// Specifies what method to use to run the Jamf inventory update.
     /// Managed setting available using `jamfReconMethod` defaults key.
@@ -102,7 +102,7 @@ struct AppContext {
     
     /// Flag that specifies whether the app should generate the migration report on the user desktop.
     /// Managed setting available using `generateReportKey` defaults key.
-    private static let fallbackShouldGenerateReport: Bool = false
+    private static let fallbackShouldGenerateReport: Bool = true
     
     /// Flag that specifies whether the app should check for incompatible app architectures during migration setup.
     /// When enabled, the app will warn users about Intel-only apps on Apple Silicon destinations and vice versa.
@@ -116,7 +116,7 @@ struct AppContext {
     
     // MARK: - Default File Scan Variables
     
-    /// Custom list of paths tha needs to be ignored during file discovery.
+    /// Custom list of paths that needs to be ignored during file discovery.
     static var defaultUrlExclusionList: [URL?] = [FileManager.default.urls(for: .libraryDirectory, in: .userDomainMask).first,
                                                   FileManager.default.urls(for: .applicationDirectory, in: .localDomainMask).first?.appendingPathComponent("\(Bundle.main.name).app"),
                                                   FileManager.default.urls(for: .applicationDirectory, in: .localDomainMask).first?.appendingPathComponent("Numbers.app"),
@@ -202,7 +202,7 @@ extension AppContext {
     private static let backupPathKey: String = "backupPath"
     
     /// UserDefaults key used to pull managed setting defining the organization name used to brand the app.
-    private static let orgNameKey: String = "orgName"
+    private static let orgNameKey: String = "WKU"
     
     /// UserDefaults key used to pull managed setting defining the redirection link to the device enrollment instructions.
     private static let enrollmentRedirectionLinkKey: String = "enrollmentRedirectionLink"
