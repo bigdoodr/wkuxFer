@@ -1,0 +1,51 @@
+# Builds the app (unsigned) for pull requests into the WKU branch, including the upstream sync PR,
+# so a conflicted or broken sync can't be merged green. Upstream's own CI (main.yml) only runs for
+# pull requests into main/dev, which this fork doesn't use, and is left alone so syncs don't conflict.
+
+name: WKU CI
+
+on:
+  pull_request:
+    branches: [wku-customizations]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: wku-ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Build (unsigned)
+    runs-on: macos-26
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Refuse unresolved merge conflicts
+        run: |
+          if grep -rIl --exclude-dir=.git -E '^(<<<<<<< |>>>>>>> )' . ; then
+            echo "::error::Conflict markers are still in the files listed above."
+            exit 1
+          fi
+
+      - name: Select Xcode 26
+        run: |
+          XCODE="$(find /Applications -maxdepth 1 -name 'Xcode_26*.app' | sort -V | tail -1)"
+          [ -n "${XCODE}" ] || { echo "::error::No Xcode 26 on this runner"; exit 1; }
+          sudo xcode-select -s "${XCODE}"
+          xcodebuild -version
+          swift --version
+
+      - name: Build
+        run: |
+          set -o pipefail
+          xcodebuild build \
+            -project migrator.xcodeproj \
+            -scheme "Data Shift" \
+            -configuration Release \
+            -destination 'generic/platform=macOS' \
+            -derivedDataPath build \
+            CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY="" \
+            | tail -n 60

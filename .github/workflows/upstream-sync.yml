@@ -1,0 +1,84 @@
+# Keeps this fork current with IBM/mac-ibm-migration-tool.
+#
+#   sync    daily: merges new upstream commits with the WKU customizations and opens/updates ONE PR
+#           (branch upstream-sync/latest). Conflicts make it a draft. See docs/WKU-RELEASES.md.
+#   release when that PR is merged: tags wku-customizations, which starts the WKU Signed Release workflow.
+#
+# Scheduled workflows only run from the repository's default branch, so wku-customizations must be the
+# default branch (docs/WKU-RELEASES.md, One-time setup).
+
+name: Upstream Sync
+
+on:
+  schedule:
+    # Daily at 11:41 UTC (6:41 a.m. Central Daylight Time / 5:41 a.m. Central Standard Time)
+    - cron: "41 11 * * *"
+  workflow_dispatch:
+    inputs:
+      force:
+        description: "Overwrite upstream-sync/latest even if it has manual commits"
+        type: boolean
+        default: false
+  pull_request:
+    types: [closed]
+    branches: [wku-customizations]
+
+permissions:
+  contents: write
+  pull-requests: write
+
+concurrency:
+  group: upstream-sync
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    name: Open or update the upstream sync PR
+    if: ${{ github.event_name != 'pull_request' }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.SYNC_TOKEN }}
+
+      - name: Sync
+        env:
+          GH_TOKEN: ${{ secrets.SYNC_TOKEN }}
+          FORCE: ${{ inputs.force || 'false' }}
+        run: bash tools/ci-upstream-sync.sh
+
+  release:
+    name: Tag the merged sync
+    if: >-
+      ${{ github.event_name == 'pull_request'
+          && github.event.pull_request.merged == true
+          && github.event.pull_request.head.ref == 'upstream-sync/latest' }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout merged commit
+        uses: actions/checkout@v7
+        with:
+          ref: ${{ github.event.pull_request.merge_commit_sha }}
+          token: ${{ secrets.SYNC_TOKEN }}
+
+      - name: Create release tag
+        env:
+          SYNC_TOKEN: ${{ secrets.SYNC_TOKEN }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: |
+          # The tag must be pushed with SYNC_TOKEN: tags pushed with the built-in GITHUB_TOKEN
+          # don't start the WKU Signed Release workflow.
+          if [ -z "$SYNC_TOKEN" ]; then
+            echo "::error::SYNC_TOKEN secret is not set; can't create the release tag."
+            exit 1
+          fi
+          TAG="v$(TZ=America/Chicago date +%Y.%m.%d.%H%M)"
+          UPSTREAM="$(tr -d '[:space:]' < .github/upstream-sync.base)"
+          git config user.name "wkuxfer-upstream-sync"
+          git config user.email "noreply@users.noreply.github.com"
+          git tag -a "$TAG" -m "Sync with upstream IBM/mac-ibm-migration-tool@${UPSTREAM:0:7} (PR #${PR_NUMBER})"
+          git push origin "refs/tags/$TAG"
+          echo "### Tagged $TAG" >> "$GITHUB_STEP_SUMMARY"
+          echo "The WKU Signed Release workflow builds, signs, notarizes and publishes it." >> "$GITHUB_STEP_SUMMARY"
